@@ -2,6 +2,42 @@
 
 #include <sycl/sycl.hpp>
 
+#include <experimental/mdspan>
+
+namespace stdex = std::experimental;
+
+// ======================================================================
+// BM_device_memcpy
+
+template <typename T>
+static void BM_device_memcpy(benchmark::State& state)
+{
+  int n = state.range(0);
+  int N = n * n * n * n;
+
+  sycl::queue q;
+
+  auto* a = sycl::malloc_device<T>(N, q);
+  auto* b = sycl::malloc_device<T>(N, q);
+
+  for (auto _ : state) {
+    q.memcpy(b, a, N);
+    q.wait();
+  }
+
+  sycl::free(a, q);
+  sycl::free(b, q);
+}
+
+BENCHMARK(BM_device_memcpy<double>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_memcpy<float>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+
 // ======================================================================
 // BM_device_assign_1d
 
@@ -13,21 +49,26 @@ static void BM_device_assign_1d(benchmark::State& state)
 
   sycl::queue q;
 
-  auto *a = sycl::malloc_device<T>(N, q);
-  auto *b = sycl::malloc_device<T>(N, q);
+  auto* a = sycl::malloc_device<T>(N, q);
+  auto* b = sycl::malloc_device<T>(N, q);
 
   for (auto _ : state) {
-    q.parallel_for(sycl::range<1>(N), [=](sycl::id<1> i) {
-        a[i] = b[i];
-    }).wait();
+    q.parallel_for(sycl::range<1>(N), [=](sycl::id<1> i) { a[i] = b[i]; })
+      .wait();
   }
 
   sycl::free(a, q);
   sycl::free(b, q);
 }
 
-BENCHMARK(BM_device_assign_1d<double>)->Arg(127)->Arg(128)->Unit(benchmark::kMillisecond);
-BENCHMARK(BM_device_assign_1d<float>)->Arg(127)->Arg(128)->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_1d<double>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_1d<float>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
 
 // ======================================================================
 // BM_device_assign_1d_add
@@ -40,21 +81,27 @@ static void BM_device_assign_1d_add(benchmark::State& state)
 
   sycl::queue q;
 
-  auto *a = sycl::malloc_device<T>(N, q);
-  auto *b = sycl::malloc_device<T>(N, q);
+  auto* a = sycl::malloc_device<T>(N, q);
+  auto* b = sycl::malloc_device<T>(N, q);
 
   for (auto _ : state) {
-    q.parallel_for(sycl::range<1>(N), [=](sycl::id<1> i) {
-        a[i] = b[i] + b[i];
-    }).wait();
+    q.parallel_for(sycl::range<1>(N),
+                   [=](sycl::id<1> i) { a[i] = b[i] + b[i]; })
+      .wait();
   }
 
   sycl::free(a, q);
   sycl::free(b, q);
 }
 
-BENCHMARK(BM_device_assign_1d_add<double>)->Arg(127)->Arg(128)->Unit(benchmark::kMillisecond);
-BENCHMARK(BM_device_assign_1d_add<float>)->Arg(127)->Arg(128)->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_1d_add<double>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_1d_add<float>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
 
 // ======================================================================
 // BM_device_assign_1d_add_scale
@@ -67,22 +114,164 @@ static void BM_device_assign_1d_add_scale(benchmark::State& state)
 
   sycl::queue q;
 
-  auto *a = sycl::malloc_device<T>(N, q);
-  auto *b = sycl::malloc_device<T>(N, q);
+  auto* a = sycl::malloc_device<T>(N, q);
+  auto* b = sycl::malloc_device<T>(N, q);
 
   for (auto _ : state) {
-    q.parallel_for(sycl::range<1>(N), [=](sycl::id<1> i) {
-        a[i] = b[i] + 2 * b[i];
-    }).wait();
+    q.parallel_for(sycl::range<1>(N),
+                   [=](sycl::id<1> i) { a[i] = b[i] + 2 * b[i]; })
+      .wait();
   }
 
   sycl::free(a, q);
   sycl::free(b, q);
 }
 
-BENCHMARK(BM_device_assign_1d_add_scale<double>)->Arg(127)->Arg(128)->Unit(benchmark::kMillisecond);
-BENCHMARK(BM_device_assign_1d_add_scale<float>)->Arg(127)->Arg(128)->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_1d_add_scale<double>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_1d_add_scale<float>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
 
+// ======================================================================
+// BM_device_assign_4d
+
+template <typename T>
+static void BM_device_assign_4d(benchmark::State& state)
+{
+  int n = state.range(0);
+  int N = n * n * n * n;
+
+  sycl::queue q;
+
+  auto* a = sycl::malloc_device<T>(N, q);
+  auto* b = sycl::malloc_device<T>(N, q);
+
+  using span_dyn_4d =
+    stdex::mdspan<T, stdex::dextents<std::size_t, 4>, stdex::layout_left>;
+
+  auto aspan = span_dyn_4d(a, n, n, n, n);
+  auto bspan = span_dyn_4d(b, n, n, n, n);
+
+  for (auto _ : state) {
+    q.parallel_for(sycl::range<3>(n * n, n, n),
+                   [=](sycl::id<3> idx) {
+                     int i0 = idx[2];
+                     int i1 = idx[1];
+                     int i2 = idx[0] % n;
+                     int i3 = idx[0] / n;
+                     aspan(i0, i1, i2, i3) = bspan(i0, i1, i2, i3);
+                   })
+      .wait();
+  }
+
+  sycl::free(a, q);
+  sycl::free(b, q);
+}
+
+BENCHMARK(BM_device_assign_4d<double>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_4d<float>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+
+// ======================================================================
+// BM_device_assign_4d_add
+
+template <typename T>
+static void BM_device_assign_4d_add(benchmark::State& state)
+{
+  int n = state.range(0);
+  int N = n * n * n * n;
+
+  sycl::queue q;
+
+  auto* a = sycl::malloc_device<T>(N, q);
+  auto* b = sycl::malloc_device<T>(N, q);
+
+  using span_dyn_4d =
+    stdex::mdspan<T, stdex::dextents<std::size_t, 4>, stdex::layout_left>;
+
+  auto aspan = span_dyn_4d(a, n, n, n, n);
+  auto bspan = span_dyn_4d(b, n, n, n, n);
+
+  for (auto _ : state) {
+    q.parallel_for(sycl::range<3>(n * n, n, n),
+                   [=](sycl::id<3> idx) {
+                     int i0 = idx[2];
+                     int i1 = idx[1];
+                     int i2 = idx[0] % n;
+                     int i3 = idx[0] / n;
+                     aspan(i0, i1, i2, i3) =
+                       bspan(i0, i1, i2, i3) + bspan(i0, i1, i2, i3);
+                   })
+      .wait();
+  }
+
+  sycl::free(a, q);
+  sycl::free(b, q);
+}
+
+BENCHMARK(BM_device_assign_4d_add<double>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_4d_add<float>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+
+// ======================================================================
+// BM_device_assign_4d_add_scale
+
+template <typename T>
+static void BM_device_assign_4d_add_scale(benchmark::State& state)
+{
+  int n = state.range(0);
+  int N = n * n * n * n;
+
+  sycl::queue q;
+
+  auto* a = sycl::malloc_device<T>(N, q);
+  auto* b = sycl::malloc_device<T>(N, q);
+
+  using span_dyn_4d =
+    stdex::mdspan<T, stdex::dextents<std::size_t, 4>, stdex::layout_left>;
+
+  auto aspan = span_dyn_4d(a, n, n, n, n);
+  auto bspan = span_dyn_4d(b, n, n, n, n);
+
+  for (auto _ : state) {
+    q.parallel_for(sycl::range<3>(n * n, n, n),
+                   [=](sycl::id<3> idx) {
+                     int i0 = idx[2];
+                     int i1 = idx[1];
+                     int i2 = idx[0] % n;
+                     int i3 = idx[0] / n;
+                     aspan(i0, i1, i2, i3) =
+                       bspan(i0, i1, i2, i3) + 2 * bspan(i0, i1, i2, i3);
+                   })
+      .wait();
+  }
+
+  sycl::free(a, q);
+  sycl::free(b, q);
+}
+
+BENCHMARK(BM_device_assign_4d_add_scale<double>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_4d_add_scale<float>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
 
 /*
 // ======================================================================
@@ -388,6 +577,5 @@ static void BM_add_dgdxy_fused_6d(benchmark::State& state)
   }
 }
 */
-
 
 BENCHMARK_MAIN();

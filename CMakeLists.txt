@@ -16,4 +16,13 @@ CPMAddPackage(
     "CMAKE_BUILD_TYPE Release"
 )
 
+CPMAddPackage(
+  NAME mdspan
+  GITHUB_REPOSITORY kokkos/mdspan
+  GIT_TAG stable
+  VERSION stable
+  OPTIONS
+    "CMAKE_BUILD_TYPE Release"
+)
+
 add_subdirectory(src)
