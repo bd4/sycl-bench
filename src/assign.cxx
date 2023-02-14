@@ -4,6 +4,8 @@
 
 #include <experimental/mdspan>
 
+#include <functional>
+
 namespace stdex = std::experimental;
 
 template <typename T>
@@ -18,20 +20,32 @@ private:
   T factor_;
 };
 
-template <typename E1, typename E2, typename T>
-class SumScaleExpr
+template <typename E, typename T>
+class ScaleExpr
 {
 public:
-  SumScaleExpr(E1& expr1, E2& expr2, T factor)
-    : expr1_(expr1), expr2_(expr2), factor_(factor)
-  {}
+  ScaleExpr(E& expr, T factor) : expr_(expr), factor_(factor) {}
 
-  T operator()(int i) const { return expr1_(i) + factor_ * expr2_(i); }
+  T operator()(int i) const { return factor_ * expr_(i); }
 
 private:
+  E expr_;
+  T factor_;
+};
+
+template <typename F, typename E1, typename E2, typename T>
+class BinaryOpExpr
+{
+public:
+  BinaryOpExpr(F f, E1& expr1, E2& expr2) : f_(f), expr1_(expr1), expr2_(expr2)
+  {}
+
+  T operator()(int i) const { return f_(expr1_(i), expr2_(i)); }
+
+private:
+  F f_;
   E1 expr1_;
   E2 expr2_;
-  T factor_;
 };
 
 // ======================================================================
@@ -223,7 +237,11 @@ static void BM_device_assign_1d_array_expr(benchmark::State& state)
   auto bspan = span_dyn_1d(b, N);
   auto cspan = span_dyn_1d(c, N);
 
-  auto expr = SumScaleExpr<span_dyn_1d, span_dyn_1d, T>(bspan, cspan, T(7.0));
+  auto scale_expr = ScaleExpr<span_dyn_1d, T>(cspan, T(7.0));
+  auto op = std::plus<T>();
+
+  auto expr = BinaryOpExpr<decltype(op), span_dyn_1d, decltype(scale_expr), T>(
+    op, bspan, scale_expr);
 
   for (auto _ : state) {
     q.parallel_for(sycl::range<1>(N),
