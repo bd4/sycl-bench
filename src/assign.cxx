@@ -6,6 +6,34 @@
 
 namespace stdex = std::experimental;
 
+template <typename T>
+class SumScale
+{
+public:
+  SumScale(T factor) : factor_(factor) {}
+
+  T operator()(T a, T b) const { return a + factor_ * b; }
+
+private:
+  T factor_;
+};
+
+template <typename E1, typename E2, typename T>
+class SumScaleExpr
+{
+public:
+  SumScaleExpr(E1& expr1, E2& expr2, T factor)
+    : expr1_(expr1), expr2_(expr2), factor_(factor)
+  {}
+
+  T operator()(int i) const { return expr1_(i) + factor_ * expr2_(i); }
+
+private:
+  E1 expr1_;
+  E2 expr2_;
+  T factor_;
+};
+
 // ======================================================================
 // BM_device_memcpy
 
@@ -132,6 +160,87 @@ BENCHMARK(BM_device_assign_1d_add_scale<double>)
   ->Arg(128)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_device_assign_1d_add_scale<float>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+
+// ======================================================================
+// BM_device_assign_1d_functor
+
+template <typename T>
+static void BM_device_assign_1d_functor(benchmark::State& state)
+{
+  int n = state.range(0);
+  int N = n * n * n * n;
+
+  sycl::queue q;
+
+  auto* a = sycl::malloc_device<T>(N, q);
+  auto* b = sycl::malloc_device<T>(N, q);
+  auto* c = sycl::malloc_device<T>(N, q);
+
+  auto op = SumScale(T(7.0));
+
+  for (auto _ : state) {
+    q.parallel_for(sycl::range<1>(N),
+                   [=](sycl::id<1> i) { a[i] = op(b[i], c[i]); })
+      .wait();
+  }
+
+  sycl::free(a, q);
+  sycl::free(b, q);
+  sycl::free(c, q);
+}
+
+BENCHMARK(BM_device_assign_1d_functor<double>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_1d_functor<float>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+
+// ======================================================================
+// BM_device_assign_1d_array_expr
+
+template <typename T>
+static void BM_device_assign_1d_array_expr(benchmark::State& state)
+{
+  int n = state.range(0);
+  int N = n * n * n * n;
+
+  sycl::queue q;
+
+  auto* a = sycl::malloc_device<T>(N, q);
+  auto* b = sycl::malloc_device<T>(N, q);
+  auto* c = sycl::malloc_device<T>(N, q);
+
+  using span_dyn_1d =
+    stdex::mdspan<T, stdex::dextents<std::size_t, 1u>, stdex::layout_left>;
+
+  auto aspan = span_dyn_1d(a, N);
+  auto bspan = span_dyn_1d(b, N);
+  auto cspan = span_dyn_1d(c, N);
+
+  auto expr = SumScaleExpr<span_dyn_1d, span_dyn_1d, T>(bspan, cspan, T(7.0));
+
+  for (auto _ : state) {
+    q.parallel_for(sycl::range<1>(N),
+                   [=](sycl::id<1> idx) { aspan(idx[0]) = expr(idx[0]); })
+      .wait();
+  }
+
+  sycl::free(a, q);
+  sycl::free(b, q);
+  sycl::free(c, q);
+}
+
+BENCHMARK(BM_device_assign_1d_array_expr<double>)
+  ->Arg(127)
+  ->Arg(128)
+  ->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_1d_array_expr<float>)
   ->Arg(127)
   ->Arg(128)
   ->Unit(benchmark::kMillisecond);
