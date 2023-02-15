@@ -65,8 +65,7 @@ static void BM_device_memcpy(benchmark::State& state)
   auto* b = sycl::malloc_device<T>(N, q);
 
   for (auto _ : state) {
-    q.memcpy(b, a, N);
-    q.wait();
+    q.copy(a, b, N).wait();
   }
 
   sycl::free(a, q);
