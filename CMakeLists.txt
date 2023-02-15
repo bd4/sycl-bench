@@ -40,6 +40,8 @@ if (SYCL_BENCH_ENABLE_GTENSOR)
 endif()
 
 add_library(common INTERFACE)
+target_compile_options(common INTERFACE -fsycl)
+target_link_options(common INTERFACE -fsycl)
 target_compile_definitions(common INTERFACE
                            SYCL_BENCH_PER_DIM_SIZE=${SYCL_BENCH_PER_DIM_SIZE})
 
