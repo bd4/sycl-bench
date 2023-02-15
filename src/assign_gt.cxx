@@ -19,7 +19,7 @@ static void BM_gt_device_memcpy(benchmark::State& state)
   auto b = gt::empty_device<T>({N});
 
   for (auto _ : state) {
-    gt::copy(a, b);
+    gt::copy_n(a.data(), a.size(), b.data());
     gt::synchronize();
   }
 }
@@ -29,6 +29,34 @@ BENCHMARK(BM_gt_device_memcpy<double>)
   ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_gt_device_memcpy<float>)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
+  ->Unit(benchmark::kMillisecond);
+
+
+// ======================================================================
+// BM_gt_device_copy
+
+template <typename T>
+static void BM_gt_device_copy(benchmark::State& state)
+{
+  int n = state.range(0);
+  int N = n * n * n * n;
+
+  auto a = gt::empty_device<T>({N});
+  auto b = gt::empty_device<T>({N});
+
+  for (auto _ : state) {
+    gt::copy(a, b);
+    gt::synchronize();
+  }
+}
+
+BENCHMARK(BM_gt_device_copy<double>)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
+  ->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_gt_device_copy<float>)
   ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
   ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
@@ -72,8 +100,13 @@ static void BM_gt_device_assign_1d_add(benchmark::State& state)
   auto a = gt::empty_device<T>({N});
   auto b = gt::empty_device<T>({N});
 
+  auto expr = a + a;
+
+  // warmup
+  b = expr;
+
   for (auto _ : state) {
-    b = a + a;
+    b = expr;
     gt::synchronize();
   }
 }
@@ -99,12 +132,14 @@ static void BM_gt_device_assign_1d_add_scale(benchmark::State& state)
   auto a = gt::empty_device<T>({N});
   auto b = gt::empty_device<T>({N});
 
+  auto expr = b + 2 * b;
+
   // warmup
-  a = b + 2 * b;
+  a = expr;
   gt::synchronize();
 
   for (auto _ : state) {
-    a = b + 2 * b;
+    a = expr;
     gt::synchronize();
   }
 }
