@@ -6,6 +6,8 @@
 
 #include <functional>
 
+#include "common.h"
+
 namespace stdex = std::experimental;
 
 template <typename T>
@@ -72,12 +74,12 @@ static void BM_device_memcpy(benchmark::State& state)
 }
 
 BENCHMARK(BM_device_memcpy<double>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_device_memcpy<float>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 
 // ======================================================================
@@ -104,12 +106,12 @@ static void BM_device_assign_1d(benchmark::State& state)
 }
 
 BENCHMARK(BM_device_assign_1d<double>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_device_assign_1d<float>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 
 // ======================================================================
@@ -137,12 +139,12 @@ static void BM_device_assign_1d_add(benchmark::State& state)
 }
 
 BENCHMARK(BM_device_assign_1d_add<double>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_device_assign_1d_add<float>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 
 // ======================================================================
@@ -170,12 +172,12 @@ static void BM_device_assign_1d_add_scale(benchmark::State& state)
 }
 
 BENCHMARK(BM_device_assign_1d_add_scale<double>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_device_assign_1d_add_scale<float>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 
 // ======================================================================
@@ -207,12 +209,12 @@ static void BM_device_assign_1d_functor(benchmark::State& state)
 }
 
 BENCHMARK(BM_device_assign_1d_functor<double>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_device_assign_1d_functor<float>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 
 // ======================================================================
@@ -255,12 +257,12 @@ static void BM_device_assign_1d_array_expr(benchmark::State& state)
 }
 
 BENCHMARK(BM_device_assign_1d_array_expr<double>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_device_assign_1d_array_expr<float>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 
 // ======================================================================
@@ -300,12 +302,12 @@ static void BM_device_assign_4d(benchmark::State& state)
 }
 
 BENCHMARK(BM_device_assign_4d<double>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_device_assign_4d<float>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 
 // ======================================================================
@@ -346,12 +348,12 @@ static void BM_device_assign_4d_add(benchmark::State& state)
 }
 
 BENCHMARK(BM_device_assign_4d_add<double>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_device_assign_4d_add<float>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 
 // ======================================================================
@@ -392,12 +394,12 @@ static void BM_device_assign_4d_add_scale(benchmark::State& state)
 }
 
 BENCHMARK(BM_device_assign_4d_add_scale<double>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 BENCHMARK(BM_device_assign_4d_add_scale<float>)
-  ->Arg(127)
-  ->Arg(128)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)
+  ->Arg(SYCL_BENCH_PER_DIM_SIZE)
   ->Unit(benchmark::kMillisecond);
 
 /*
@@ -420,7 +422,7 @@ static void BM_device_assign_4d(benchmark::State& state)
   }
 }
 
-BENCHMARK(BM_device_assign_4d)->Arg(127)->Arg(128)->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_4d)->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)->Arg(SYCL_BENCH_PER_DIM_SIZE)->Unit(benchmark::kMillisecond);
 
 
 // ======================================================================
@@ -444,7 +446,7 @@ static void BM_device_assign_1d_op(benchmark::State& state)
   }
 }
 
-BENCHMARK(BM_device_assign_1d_op)->Arg(127)->Arg(128)->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_1d_op)->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)->Arg(SYCL_BENCH_PER_DIM_SIZE)->Unit(benchmark::kMillisecond);
 
 
 // ======================================================================
@@ -466,7 +468,7 @@ static void BM_device_assign_4d_op(benchmark::State& state)
   }
 }
 
-BENCHMARK(BM_device_assign_4d_op)->Arg(127)->Arg(128)->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_device_assign_4d_op)->Arg(SYCL_BENCH_PER_DIM_SIZE - 1)->Arg(SYCL_BENCH_PER_DIM_SIZE)->Unit(benchmark::kMillisecond);
 
 // ======================================================================
 // BM_add_ij_sten
